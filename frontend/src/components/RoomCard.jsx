@@ -1,78 +1,70 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { GENDER_COLORS, ROOM_TYPE_COLORS } from '../constants.js';
 
-const PLACEHOLDER = 'https://placehold.co/400x260/d1fae5/047857?text=BASERA';
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&auto=format&fit=crop';
 
 export default function RoomCard({ room }) {
   if (!room) return null;
-
-  const {
-    _id,
-    title,
-    locality,
-    price,
-    gender,
-    roomType,
-    images = [],
-  } = room;
-
+  const { _id, title, locality, price, gender, roomType, amenities = [], images = [] } = room;
   const imgSrc = images[0] || PLACEHOLDER;
-  const genderClass = GENDER_COLORS[gender] || 'bg-gray-100 text-gray-600';
-  const typeClass   = ROOM_TYPE_COLORS[roomType] || 'bg-gray-100 text-gray-600';
 
   return (
-    <div
-      className="card hover:shadow-md transition-shadow duration-200 flex flex-col"
+    <Link
+      to={`/rooms/${_id}`}
+      className="card card-hover group block"
       data-testid="room-card"
     >
-      {/* Image */}
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden bg-canvas-soft">
         <img
           src={imgSrc}
           alt={title}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
           onError={(e) => { e.target.src = PLACEHOLDER; }}
           loading="lazy"
         />
-        <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${genderClass}`}>
-          {gender}
+        <span className="absolute right-3 top-3 rounded-full bg-canvas-card/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
+          {roomType}
         </span>
       </div>
 
-      {/* Body */}
-      <div className="p-4 flex flex-col flex-1 gap-1">
-        <h3 className="font-semibold text-gray-800 text-sm leading-snug line-clamp-2">{title}</h3>
-
-        <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
-          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span>{locality}</span>
-        </div>
-
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-emerald-700 font-bold text-base">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="line-clamp-1 text-[15px] font-semibold text-ink group-hover:text-accent-dark transition-colors">
+            {title}
+          </h3>
+          <span className="shrink-0 whitespace-nowrap text-[15px] font-bold text-accent-dark">
             ₹{Number(price).toLocaleString('en-IN')}
-            <span className="text-gray-400 font-normal text-xs">/mo</span>
-          </span>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeClass}`}>
-            {roomType}
+            <span className="text-[10px] font-medium text-ink-muted">/mo</span>
           </span>
         </div>
 
-        <div className="mt-auto pt-3">
-          <Link
-            to={`/rooms/${_id}`}
-            className="block w-full text-center btn-primary text-sm py-2"
-            data-testid={`view-room-${_id}`}
-          >
-            View Details
-          </Link>
+        <p className="mt-1 flex items-center gap-1 text-[13px] text-ink-muted">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M6 11s4-3.5 4-7a4 4 0 1 0-8 0c0 3.5 4 7 4 7z" />
+            <circle cx="6" cy="4" r="1.3" />
+          </svg>
+          {locality}
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span className="inline-flex items-center rounded-full bg-canvas-soft px-2.5 py-0.5 text-[11px] font-medium text-ink-soft border border-line">
+            {gender}
+          </span>
+          {amenities.slice(0, 2).map((a) => (
+            <span
+              key={a}
+              className="inline-flex items-center rounded-full bg-canvas-soft px-2.5 py-0.5 text-[11px] font-medium text-ink-soft border border-line"
+            >
+              {a}
+            </span>
+          ))}
+          {amenities.length > 2 && (
+            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium text-ink-subtle">
+              +{amenities.length - 2}
+            </span>
+          )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { dbConnect } from "@/lib/db";
 import Room, { LOCALITIES, ROOM_TYPES, GENDERS } from "@/models/Room";
 import RoomCard from "@/components/RoomCard";
@@ -27,24 +28,72 @@ export default async function RoomsPage({ searchParams }) {
     rooms = await Room.find(q).sort({ createdAt: -1 }).limit(60).lean();
   } catch {}
 
+  const activeFilters = [
+    sp.q && { k: "q", label: `"${sp.q}"` },
+    sp.locality && { k: "locality", label: sp.locality },
+    sp.roomType && { k: "roomType", label: sp.roomType },
+    sp.gender && { k: "gender", label: sp.gender },
+    sp.minPrice && { k: "minPrice", label: `≥ ₹${sp.minPrice}` },
+    sp.maxPrice && { k: "maxPrice", label: `≤ ₹${sp.maxPrice}` },
+  ].filter(Boolean);
+
+  const removeUrl = (key) => {
+    const params = new URLSearchParams();
+    Object.entries(sp).forEach(([k, v]) => { if (k !== key && v) params.set(k, v); });
+    return `/rooms${params.toString() ? `?${params}` : ""}`;
+  };
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
       <aside id="filters">
         <RoomFilters
           options={{ localities: LOCALITIES, roomTypes: ROOM_TYPES, genders: GENDERS }}
           initial={sp}
         />
       </aside>
+
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">{rooms.length} rooms found</h1>
+        <div className="mb-5 flex flex-col gap-3 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Rooms in Srinagar</h1>
+            <p className="mt-1 text-sm text-ink-muted">
+              Showing <span className="font-semibold text-ink">{rooms.length}</span> result{rooms.length === 1 ? "" : "s"}
+              {activeFilters.length > 0 && <> · {activeFilters.length} filter{activeFilters.length === 1 ? "" : "s"} applied</>}
+            </p>
+          </div>
         </div>
+
+        {activeFilters.length > 0 && (
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            {activeFilters.map((f) => (
+              <Link
+                key={f.k}
+                href={removeUrl(f.k)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas-card px-3 py-1 text-xs font-medium text-ink hover:border-ink/30 hover:bg-canvas-soft"
+              >
+                {f.label}
+                <span className="text-ink-subtle">✕</span>
+              </Link>
+            ))}
+            <Link href="/rooms" className="text-xs font-semibold text-ink-muted hover:text-ink underline underline-offset-4">
+              Clear all
+            </Link>
+          </div>
+        )}
+
         {rooms.length === 0 ? (
-          <div className="card p-8 text-center text-gray-600">
-            No rooms match your filters. Try clearing some.
+          <div className="card flex flex-col items-center justify-center py-20 text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-full bg-accent-light text-accent-dark text-2xl">
+              ⌕
+            </div>
+            <h3 className="mt-5 text-lg font-semibold">No rooms match your filters</h3>
+            <p className="mt-1 max-w-sm text-sm text-ink-muted">
+              Try widening the price range, switching locality, or clearing filters to see all available rooms.
+            </p>
+            <Link href="/rooms" className="btn-primary mt-6">Clear all filters</Link>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {rooms.map((r) => (
               <RoomCard key={r._id.toString()} room={JSON.parse(JSON.stringify(r))} />
             ))}

@@ -1,29 +1,60 @@
 import Link from "next/link";
 
+const FALLBACK = "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&auto=format&fit=crop";
+
 export default function RoomCard({ room }) {
-  const img = room.images?.[0] || "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&auto=format&fit=crop";
+  const img = room.images?.[0] || FALLBACK;
   return (
     <Link
       href={`/rooms/${room._id}`}
-      className="card group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md"
+      className="card card-hover group block overflow-hidden"
       data-testid="room-card"
     >
-      <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className="relative aspect-[4/3] overflow-hidden bg-canvas-soft">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={img} alt={room.title} className="h-full w-full object-cover transition group-hover:scale-105" />
+        <img
+          src={img}
+          alt={room.title}
+          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+          loading="lazy"
+        />
+        {!room.available && (
+          <span className="absolute left-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-canvas backdrop-blur">
+            Hidden
+          </span>
+        )}
+        <span className="absolute right-3 top-3 rounded-full bg-canvas-card/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
+          {room.roomType}
+        </span>
       </div>
+
       <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 font-semibold">{room.title}</h3>
-          <span className="whitespace-nowrap font-bold text-brand-dark">₹{room.price.toLocaleString("en-IN")}</span>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="line-clamp-1 text-[15px] font-semibold text-ink group-hover:text-accent-dark transition-colors">
+            {room.title}
+          </h3>
+          <span className="shrink-0 whitespace-nowrap text-[15px] font-bold text-accent-dark">
+            ₹{room.price.toLocaleString("en-IN")}
+            <span className="text-[10px] font-medium text-ink-muted">/mo</span>
+          </span>
         </div>
-        <p className="mt-1 text-sm text-gray-600">{room.locality}</p>
+
+        <p className="mt-1 flex items-center gap-1 text-[13px] text-ink-muted">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M6 11s4-3.5 4-7a4 4 0 1 0-8 0c0 3.5 4 7 4 7z" />
+            <circle cx="6" cy="4" r="1.3" />
+          </svg>
+          {room.locality}
+        </p>
+
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="badge">{room.roomType}</span>
           <span className="badge">{room.gender}</span>
           {room.amenities?.slice(0, 2).map((a) => (
-            <span key={a} className="badge bg-gray-100 text-gray-700">{a}</span>
+            <span key={a} className="badge">{a}</span>
           ))}
+          {room.amenities?.length > 2 && (
+            <span className="badge bg-canvas-card text-ink-subtle">+{room.amenities.length - 2}</span>
+          )}
         </div>
       </div>
     </Link>

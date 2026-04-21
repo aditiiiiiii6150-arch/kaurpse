@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '../api/axios.js';
 
 const AuthContext = createContext(null);
@@ -39,6 +39,16 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem('basera_user');
     localStorage.removeItem('basera_token');
+  }, []);
+
+  // Listen for global auth-expired events emitted from axios interceptor
+  useEffect(() => {
+    function onExpired() {
+      setUser(null);
+      setToken(null);
+    }
+    window.addEventListener('basera:auth-expired', onExpired);
+    return () => window.removeEventListener('basera:auth-expired', onExpired);
   }, []);
 
   return (

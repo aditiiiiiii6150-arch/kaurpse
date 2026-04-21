@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import mongoose from "mongoose";
 import { dbConnect } from "@/lib/db";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditListingPage({ params }) {
   const user = getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/login?next=/dashboard/${params.id}/edit`);
   if (!mongoose.isValidObjectId(params.id)) notFound();
 
   await dbConnect();
@@ -19,8 +20,16 @@ export default async function EditListingPage({ params }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 text-2xl font-semibold">Edit listing</h1>
-      <ListingWizard mode="edit" roomId={params.id} initial={JSON.parse(JSON.stringify(room))} />
+      <div className="mb-6">
+        <Link href="/dashboard" className="text-sm font-medium text-ink-muted hover:text-ink">← Dashboard</Link>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">Edit listing</h1>
+        <p className="mt-1 text-sm text-ink-muted">Update any details — your changes go live immediately.</p>
+      </div>
+      <ListingWizard
+        mode="edit"
+        roomId={params.id}
+        initial={JSON.parse(JSON.stringify(room))}
+      />
     </div>
   );
 }

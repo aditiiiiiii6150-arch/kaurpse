@@ -1,141 +1,132 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const toast = useToast();
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+
+  // Close mobile menu when route changes
+  useEffect(() => { setOpen(false); }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
+    toast.success('Logged out');
     navigate('/');
-    setMenuOpen(false);
   };
 
+  const linkBase = 'rounded-[10px] px-3 py-2 text-sm font-medium transition-colors';
   const navLinkClass = ({ isActive }) =>
-    `text-sm font-medium transition-colors duration-150 ${
-      isActive ? 'text-emerald-700 font-semibold' : 'text-gray-600 hover:text-emerald-600'
-    }`;
+    `${linkBase} ${isActive ? 'bg-canvas-soft text-ink' : 'text-ink-muted hover:text-ink hover:bg-canvas-soft'}`;
 
   return (
-    <nav className="bg-white shadow-sm border-b border-emerald-100 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-emerald-700 font-bold text-2xl tracking-tight hover:text-emerald-800 transition-colors"
-            data-testid="navbar-logo"
-          >
-            <span className="text-3xl">🏡</span>
-            <span>BASERA</span>
-          </Link>
+    <header
+      id="site-header"
+      className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md"
+    >
+      <div className="page-container !py-3.5 flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="group flex items-center gap-2.5" data-testid="navbar-logo">
+          <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-ink text-canvas font-bold tracking-tight transition-transform group-hover:rotate-[-4deg]">
+            B
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-base font-bold tracking-tight">BASERA</span>
+            <span className="hidden text-[10px] font-medium uppercase tracking-[0.14em] text-ink-subtle sm:inline">
+              Srinagar · Garhwal
+            </span>
+          </span>
+        </Link>
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6">
-            <NavLink to="/" end className={navLinkClass}>Home</NavLink>
-            <NavLink to="/listings" className={navLinkClass}>Listings</NavLink>
+        {/* Desktop */}
+        <nav className="hidden md:flex items-center gap-1" id="desktop-nav">
+          <NavLink to="/" end className={navLinkClass}>Home</NavLink>
+          <NavLink to="/listings" className={navLinkClass}>Listings</NavLink>
 
-            {user?.role === 'owner' && (
+          {user?.role === 'owner' && (
+            <>
+              <NavLink to="/add-listing" className={navLinkClass}>+ List Room</NavLink>
+              <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
+            </>
+          )}
+
+          {user ? (
+            <div className="ml-2 flex items-center gap-2">
+              <span className="hidden text-sm text-ink-muted lg:inline">
+                Hi, <span className="font-semibold text-ink">{user.name?.split(' ')[0]}</span>
+              </span>
+              <button
+                onClick={handleLogout}
+                className="btn-secondary !px-3.5 !py-2"
+                data-testid="logout-btn"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="ml-1 flex items-center gap-1">
+              <NavLink to="/login" className={navLinkClass}>Login</NavLink>
+              <Link to="/register" className="btn-accent !px-4 !py-2">Sign up</Link>
+            </div>
+          )}
+        </nav>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-line bg-canvas-card text-ink hover:bg-canvas-soft"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Toggle menu"
+          aria-expanded={open}
+          id="mobile-menu-btn"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            {open ? (
               <>
-                <NavLink to="/add-listing" className={navLinkClass}>
-                  <span className="flex items-center gap-1">
-                    <span className="text-base">+</span> List Room
-                  </span>
-                </NavLink>
-                <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
+                <path d="M4 4l10 10" />
+                <path d="M14 4L4 14" />
+              </>
+            ) : (
+              <>
+                <path d="M3 5h12" />
+                <path d="M3 9h12" />
+                <path d="M3 13h12" />
               </>
             )}
+          </svg>
+        </button>
+      </div>
 
-            {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500">
-                  Hi, <span className="font-medium text-gray-700">{user.name?.split(' ')[0]}</span>
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="btn-secondary text-sm px-4 py-2"
-                  data-testid="logout-btn"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <NavLink to="/login" className={navLinkClass}>Login</NavLink>
-                <Link to="/register" className="btn-primary text-sm px-4 py-2">
-                  Register
-                </Link>
-              </div>
+      {/* Mobile drawer */}
+      {open && (
+        <div className="md:hidden border-t border-line bg-canvas-card animate-slide-up" id="mobile-nav">
+          <div className="page-container !py-3 flex flex-col gap-1">
+            <NavLink to="/" end className={({ isActive }) => `${linkBase} ${isActive ? 'bg-canvas-soft' : 'hover:bg-canvas-soft'}`}>Home</NavLink>
+            <NavLink to="/listings" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-canvas-soft' : 'hover:bg-canvas-soft'}`}>Browse listings</NavLink>
+            {user?.role === 'owner' && (
+              <>
+                <NavLink to="/add-listing" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-canvas-soft' : 'hover:bg-canvas-soft'}`}>+ List Room</NavLink>
+                <NavLink to="/dashboard" className={({ isActive }) => `${linkBase} ${isActive ? 'bg-canvas-soft' : 'hover:bg-canvas-soft'}`}>Dashboard</NavLink>
+              </>
             )}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-emerald-50 transition-colors"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Toggle menu"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden border-t border-emerald-50 py-3 space-y-1 pb-4">
-            {[
-              { to: '/', label: 'Home', end: true },
-              { to: '/listings', label: 'Listings' },
-              ...(user?.role === 'owner'
-                ? [
-                    { to: '/add-listing', label: '+ List Room' },
-                    { to: '/dashboard', label: 'Dashboard' },
-                  ]
-                : []),
-            ].map(({ to, label, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-50'
-                  }`
-                }
-                onClick={() => setMenuOpen(false)}
-              >
-                {label}
-              </NavLink>
-            ))}
-            <div className="border-t border-gray-100 mt-2 pt-2 px-3">
+            <div className="border-t border-line mt-2 pt-2">
               {user ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Hi, {user.name?.split(' ')[0]}</span>
-                  <button onClick={handleLogout} className="btn-secondary text-sm px-3 py-1.5">
-                    Logout
-                  </button>
-                </div>
+                <button onClick={handleLogout} className="btn-secondary w-full">
+                  Logout ({user.name?.split(' ')[0]})
+                </button>
               ) : (
                 <div className="flex gap-2">
-                  <Link to="/login" onClick={() => setMenuOpen(false)} className="btn-secondary text-sm flex-1 text-center">
-                    Login
-                  </Link>
-                  <Link to="/register" onClick={() => setMenuOpen(false)} className="btn-primary text-sm flex-1 text-center">
-                    Register
-                  </Link>
+                  <Link to="/login" className="btn-secondary flex-1">Login</Link>
+                  <Link to="/register" className="btn-accent flex-1">Sign up</Link>
                 </div>
               )}
             </div>
           </div>
-        )}
-      </div>
-    </nav>
+        </div>
+      )}
+    </header>
   );
 }

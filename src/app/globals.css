@@ -1,15 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html, body { height: 100%; }
-body { @apply bg-gray-50 text-gray-900 antialiased; }
+@layer base {
+  html, body { height: 100%; }
+  html {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection { background: #FDDF9B; color: #1B1B1F; }
+}
 
-.btn { @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition; }
-.btn-primary { @apply btn bg-brand text-white hover:bg-brand-dark; }
-.btn-outline { @apply btn border border-gray-300 bg-white hover:bg-gray-50; }
-.btn-ghost { @apply btn hover:bg-gray-100; }
-.input { @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand; }
-.label { @apply mb-1 block text-sm font-medium text-gray-700; }
-.card { @apply rounded-lg border border-gray-200 bg-white shadow-sm; }
-.badge { @apply inline-flex items-center rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-medium text-brand-dark; }
+@layer components {
+  /* ---------- Buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-sm font-semibold
+           transition-all duration-200 ease-out select-none
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
+           disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-canvas hover:bg-ink-soft active:bg-black
+           shadow-soft hover:shadow-lift hover:-translate-y-px;
+  }
+  .btn-accent {
+    @apply btn bg-accent text-ink hover:bg-accent-dark hover:text-white
+           shadow-soft hover:shadow-ring hover:-translate-y-px;
+  }
+  .btn-outline {
+    @apply btn border border-line bg-canvas-card text-ink hover:bg-canvas-soft hover:border-ink/20;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-ink hover:bg-canvas-soft;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 shadow-soft;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* ---------- Inputs ---------- */
+  .input {
+    @apply w-full rounded-[10px] border border-line bg-canvas-card px-3.5 py-2.5 text-sm text-ink
+           placeholder:text-ink-subtle
+           transition-colors duration-150
+           focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30
+           disabled:opacity-60;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted;
+  }
+
+  /* ---------- Surfaces ---------- */
+  .card {
+    @apply rounded-[12px] border border-line bg-canvas-card shadow-soft;
+  }
+  .card-hover {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lift hover:border-accent/40;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full bg-canvas-soft px-2.5 py-0.5 text-xs font-medium text-ink-soft border border-line;
+  }
+  .badge-accent {
+    @apply badge bg-accent-light text-accent-dark border-accent/30;
+  }
+
+  /* ---------- Layout ---------- */
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+
+  /* Spinner */
+  .spinner {
+    @apply inline-block h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #E5DFD2; border-radius: 8px; border: 2px solid #FBF9F5; }
+::-webkit-scrollbar-thumb:hover { background: #D5CDB8; }

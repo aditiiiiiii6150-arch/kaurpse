@@ -1,36 +1,25 @@
 import React from 'react';
 import { LOCALITIES, ROOM_TYPES, GENDERS } from '../constants.js';
 
-export default function Filters({ filters, onChange }) {
+export default function Filters({ filters, onChange, onClear }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     onChange({ ...filters, [name]: value });
   };
 
-  const handleReset = () => {
-    onChange({
-      q: '',
-      locality: '',
-      roomType: '',
-      gender: '',
-      minPrice: '',
-      maxPrice: '',
-    });
-  };
-
-  const hasFilters = Object.values(filters).some((v) => v !== '');
+  const activeCount = Object.values(filters).filter((v) => v !== '' && v != null).length;
 
   return (
-    <div id="filters" className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-gray-700 text-sm">Filter Rooms</h2>
-        {hasFilters && (
+    <div id="filters" className="card p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-ink">Filters</h2>
+        {activeCount > 0 && (
           <button
-            onClick={handleReset}
-            className="text-xs text-red-500 hover:text-red-700 transition-colors"
+            onClick={onClear}
+            className="text-xs font-semibold text-ink-muted hover:text-ink underline underline-offset-4"
             data-testid="reset-filters"
           >
-            Reset all
+            Clear all ({activeCount})
           </button>
         )}
       </div>
@@ -44,89 +33,58 @@ export default function Filters({ filters, onChange }) {
             name="q"
             value={filters.q}
             onChange={handleChange}
-            placeholder="Title, locality..."
+            placeholder="Title, locality…"
             className="input-field"
             data-testid="filter-search"
           />
         </div>
 
-        {/* Locality */}
         <div>
           <label className="label">Locality</label>
           <select
-            name="locality"
-            value={filters.locality}
-            onChange={handleChange}
-            className="input-field"
-            data-testid="filter-locality"
+            name="locality" value={filters.locality} onChange={handleChange}
+            className="input-field" data-testid="filter-locality"
           >
             <option value="">All localities</option>
-            {LOCALITIES.map((l) => (
-              <option key={l} value={l}>{l}</option>
-            ))}
+            {LOCALITIES.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
 
-        {/* Room Type */}
         <div>
-          <label className="label">Room Type</label>
+          <label className="label">Room type</label>
           <select
-            name="roomType"
-            value={filters.roomType}
-            onChange={handleChange}
-            className="input-field"
-            data-testid="filter-room-type"
+            name="roomType" value={filters.roomType} onChange={handleChange}
+            className="input-field" data-testid="filter-room-type"
           >
-            <option value="">All types</option>
-            {ROOM_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+            <option value="">Any type</option>
+            {ROOM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
 
-        {/* Gender */}
         <div>
           <label className="label">Gender</label>
           <select
-            name="gender"
-            value={filters.gender}
-            onChange={handleChange}
-            className="input-field"
-            data-testid="filter-gender"
+            name="gender" value={filters.gender} onChange={handleChange}
+            className="input-field" data-testid="filter-gender"
           >
-            <option value="">All</option>
-            {GENDERS.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
+            <option value="">Any</option>
+            {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
         </div>
 
-        {/* Price range */}
-        <div className="flex gap-2 xl:col-span-1">
+        <div className="flex gap-2">
           <div className="flex-1">
             <label className="label">Min ₹</label>
             <input
-              type="number"
-              name="minPrice"
-              value={filters.minPrice}
-              onChange={handleChange}
-              placeholder="0"
-              min="0"
-              className="input-field"
-              data-testid="filter-min-price"
+              type="number" name="minPrice" value={filters.minPrice} onChange={handleChange}
+              placeholder="0" min="0" className="input-field" data-testid="filter-min-price"
             />
           </div>
           <div className="flex-1">
             <label className="label">Max ₹</label>
             <input
-              type="number"
-              name="maxPrice"
-              value={filters.maxPrice}
-              onChange={handleChange}
-              placeholder="∞"
-              min="0"
-              className="input-field"
-              data-testid="filter-max-price"
+              type="number" name="maxPrice" value={filters.maxPrice} onChange={handleChange}
+              placeholder="∞" min="0" className="input-field" data-testid="filter-max-price"
             />
           </div>
         </div>
