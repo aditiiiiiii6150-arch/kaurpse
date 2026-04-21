@@ -1,12 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useFavorites } from '../context/FavoritesContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&auto=format&fit=crop';
 
 export default function RoomCard({ room }) {
+  const { isFav, toggle } = useFavorites();
+  const toast = useToast();
+
   if (!room) return null;
   const { _id, title, locality, price, gender, roomType, amenities = [], images = [] } = room;
   const imgSrc = images[0] || PLACEHOLDER;
+  const saved = isFav(_id);
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const added = toggle(room);
+    toast.success(added ? 'Saved to your list' : 'Removed from saved');
+  };
 
   return (
     <Link
@@ -29,6 +42,28 @@ export default function RoomCard({ room }) {
         <span className="absolute right-3 top-3 rounded-full bg-canvas-card/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
           {roomType}
         </span>
+
+        {/* save heart (top-left) */}
+        <button
+          type="button"
+          onClick={handleSave}
+          aria-label={saved ? 'Remove from saved' : 'Save room'}
+          aria-pressed={saved}
+          title={saved ? 'Saved' : 'Save'}
+          className={`absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full border backdrop-blur shadow-soft transition-all duration-200
+            ${saved
+              ? 'bg-accent border-accent-dark text-ink scale-100'
+              : 'bg-canvas-card/90 border-line text-ink-muted hover:text-accent-dark hover:scale-110'}`}
+          data-testid="save-room"
+        >
+          <svg
+            width="16" height="16" viewBox="0 0 24 24"
+            fill={saved ? 'currentColor' : 'none'}
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </button>
 
         {/* price chip (bottom-left, on image) */}
         <span className="absolute left-3 bottom-3 inline-flex items-baseline gap-1 rounded-full bg-canvas-card/95 px-3 py-1 shadow-soft backdrop-blur">
