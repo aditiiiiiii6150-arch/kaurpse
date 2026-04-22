@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { dbConnect } from "@/lib/db";
 import Room from "@/models/Room";
 import { getCurrentUser } from "@/lib/auth";
+
+const PAGE_SIZE = 12;
 
 export async function GET(req) {
   await dbConnect();
@@ -14,6 +17,9 @@ export async function GET(req) {
   const maxPrice = parseInt(searchParams.get("maxPrice") || "0", 10);
   const search = searchParams.get("q");
   const mine = searchParams.get("mine");
+  const cursor = searchParams.get("cursor");
+  const limitParam = parseInt(searchParams.get("limit") || `${PAGE_SIZE}`, 10);
+  const limit = Math.min(Math.max(limitParam, 1), 50);
 
   if (locality) q.locality = locality;
   if (roomType) q.roomType = roomType;
@@ -32,12 +38,26 @@ export async function GET(req) {
     const user = getCurrentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     q.owner = user.id;
-  } else {
-    q.available = true;
+    // Dashboard route: keep behaviour as-is (no cursor pagination, return everything)
+    const rooms = await Room.find(q).sort({ createdAt: -1 }).lean();
+    return NextResponse.json({ rooms });
   }
 
-  const rooms = await Room.find(q).sort({ createdAt: -1 }).limit(60).lean();
-  return NextResponse.json({ rooms });
+  q.available = true;
+
+  // Cursor-based pagination ordered by _id desc (matches createdAt desc since
+  // ObjectId is monotonically increasing).
+  if (cursor && mongoose.isValidObjectId(cursor)) {
+    q._id = { $lt: new mongoose.Types.ObjectId(cursor) };
+  }
+
+  // Fetch limit + 1 so we can detect whether more results exist.
+  const docs = await Room.find(q).sort({ _id: -1 }).limit(limit + 1).lean();
+  const hasMore = docs.length > limit;
+  const rooms = hasMore ? docs.slice(0, limit) : docs;
+  const nextCursor = hasMore ? String(rooms[rooms.length - 1]._id) : null;
+
+  return NextResponse.json({ rooms, nextCursor });
 }
 
 export async function POST(req) {

@@ -1,8 +1,9 @@
 import Link from "next/link";
+import SaveButton from "./SaveButton";
 
 const FALLBACK = "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=900&auto=format&fit=crop";
 
-export default function RoomCard({ room }) {
+export default function RoomCard({ room, saved = false, onToggleSave }) {
   const img = room.images?.[0] || FALLBACK;
   return (
     <Link
@@ -26,6 +27,9 @@ export default function RoomCard({ room }) {
         <span className="absolute right-3 top-3 rounded-full bg-canvas-card/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-soft backdrop-blur">
           {room.roomType}
         </span>
+        <div className="absolute bottom-3 right-3">
+          <SaveButton roomId={room._id} saved={saved} onToggle={onToggleSave} />
+        </div>
       </div>
 
       <div className="p-4">

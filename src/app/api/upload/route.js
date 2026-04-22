@@ -14,6 +14,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Provide a base64 dataUri" }, { status: 400 });
     }
     if (!isCloudinaryConfigured()) {
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Image uploads are unavailable — Cloudinary is not configured." },
+          { status: 503 }
+        );
+      }
       // Dev fallback: return the data URI as-is so the form keeps working without cloudinary keys.
       return NextResponse.json({ url: dataUri, fallback: true });
     }

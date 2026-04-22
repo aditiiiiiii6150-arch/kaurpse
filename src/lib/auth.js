@@ -2,8 +2,22 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
+const DEFAULT_SECRET = "dev-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_SECRET;
 const COOKIE_NAME = "basera_token";
+
+if (
+  process.env.NODE_ENV === "production" &&
+  (!process.env.JWT_SECRET ||
+    process.env.JWT_SECRET === DEFAULT_SECRET ||
+    process.env.JWT_SECRET === "change-me-in-prod" ||
+    process.env.JWT_SECRET.length < 16)
+) {
+  throw new Error(
+    "[BASERA] JWT_SECRET is missing, default, or too short in production. " +
+      "Set a strong JWT_SECRET (>= 16 chars) in your environment before deploying."
+  );
+}
 
 export async function hashPassword(pw) {
   return bcrypt.hash(pw, 10);

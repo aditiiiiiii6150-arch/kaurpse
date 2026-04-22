@@ -48,11 +48,19 @@ export default function RegisterForm() {
       <form onSubmit={submit} className="mt-6 space-y-4" id="register-form">
         <div>
           <label className="label">I am a…</label>
-          <div className="flex gap-2">
-            <RoleButton on={form.role === "seeker"} onClick={() => setForm({ ...form, role: "seeker" })}>
+          <div className="grid grid-cols-2 gap-2">
+            <RoleButton
+              on={form.role === "seeker"}
+              onClick={() => setForm({ ...form, role: "seeker" })}
+              hint="Browse rooms, save favourites, contact owners"
+            >
               Looking for a room
             </RoleButton>
-            <RoleButton on={form.role === "owner"} onClick={() => setForm({ ...form, role: "owner" })}>
+            <RoleButton
+              on={form.role === "owner"}
+              onClick={() => setForm({ ...form, role: "owner" })}
+              hint="List rooms, manage availability, get enquiries"
+            >
               Room owner
             </RoleButton>
           </div>
@@ -100,18 +108,27 @@ export default function RegisterForm() {
   );
 }
 
-function RoleButton({ on, onClick, children }) {
+function RoleButton({ on, onClick, children, hint }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-[10px] border px-3 py-2.5 text-sm font-semibold transition ${
+      className={`flex flex-col items-start gap-1 rounded-[10px] border px-3 py-2.5 text-left text-sm font-semibold transition ${
         on
           ? "border-accent bg-accent-light text-accent-dark shadow-soft"
           : "border-line bg-canvas-card text-ink-muted hover:border-ink/20 hover:text-ink"
       }`}
     >
-      {children}
+      <span>{children}</span>
+      {hint && (
+        <span
+          className={`text-[11px] font-medium leading-snug ${
+            on ? "text-accent-dark/80" : "text-ink-subtle"
+          }`}
+        >
+          {hint}
+        </span>
+      )}
     </button>
   );
 }
