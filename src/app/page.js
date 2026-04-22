@@ -2,6 +2,7 @@ import Link from "next/link";
 import { dbConnect } from "@/lib/db";
 import Room, { LOCALITIES } from "@/models/Room";
 import RoomCard from "@/components/RoomCard";
+import HeroSearch from "@/components/HeroSearch";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,9 @@ export default async function HomePage() {
             Discover PGs, single rooms and shared flats near HNBGU, Bus Stand and Bada Bazaar — and connect
             directly with owners on WhatsApp.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <HeroSearch />
+
+          <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/rooms" className="btn-primary">Browse rooms →</Link>
             <Link href="/register" className="btn-outline">List your room</Link>
           </div>

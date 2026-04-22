@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ["seeker", "owner"], default: "seeker" },
+    savedRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room", default: [] }],
   },
   { timestamps: true }
 );

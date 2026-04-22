@@ -3,16 +3,73 @@ import { notFound } from "next/navigation";
 import mongoose from "mongoose";
 import { dbConnect } from "@/lib/db";
 import Room from "@/models/Room";
+import User from "@/models/User";
 import RoomCard from "@/components/RoomCard";
 import RoomGallery from "@/components/RoomGallery";
+import SaveButton from "@/components/SaveButton";
+import OwnerControls from "@/components/OwnerControls";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+const FALLBACK_OG = "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200&auto=format&fit=crop";
+
+function siteUrl() {
+  return process.env.NEXT_PUBLIC_BASE_URL || "https://basera.app";
+}
+
+export async function generateMetadata({ params }) {
+  if (!mongoose.isValidObjectId(params.id)) {
+    return { title: "Room not found · BASERA" };
+  }
+  try {
+    await dbConnect();
+    const room = await Room.findById(params.id).lean();
+    if (!room) return { title: "Room not found · BASERA" };
+
+    const title = `${room.title} · ₹${room.price.toLocaleString("en-IN")}/mo in ${room.locality} · BASERA`;
+    const desc =
+      (room.description || "").slice(0, 160).replace(/\s+/g, " ").trim() ||
+      `${room.roomType} room in ${room.locality}, Srinagar Garhwal — ₹${room.price.toLocaleString("en-IN")}/mo. Contact owner directly on BASERA.`;
+    const image = room.images?.[0] || FALLBACK_OG;
+    const url = `${siteUrl()}/rooms/${params.id}`;
+
+    return {
+      title,
+      description: desc,
+      alternates: { canonical: url },
+      openGraph: {
+        title,
+        description: desc,
+        url,
+        type: "website",
+        images: [{ url: image, width: 1200, height: 630, alt: room.title }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description: desc,
+        images: [image],
+      },
+    };
+  } catch {
+    return { title: "BASERA" };
+  }
+}
 
 export default async function RoomDetailPage({ params }) {
   if (!mongoose.isValidObjectId(params.id)) notFound();
   await dbConnect();
   const room = await Room.findById(params.id).lean();
   if (!room) notFound();
+
+  const currentUser = getCurrentUser();
+  let isSaved = false;
+  if (currentUser) {
+    const u = await User.findById(currentUser.id).select("savedRooms").lean();
+    isSaved = (u?.savedRooms || []).map(String).includes(String(room._id));
+  }
+  const isOwner = currentUser && String(room.owner) === String(currentUser.id);
 
   const similar = await Room.find({
     _id: { $ne: room._id },
@@ -42,12 +99,21 @@ export default async function RoomDetailPage({ params }) {
         </Link>
       </div>
 
+      {isOwner && (
+        <OwnerControls roomId={r._id} initialAvailable={r.available} />
+      )}
+
       <RoomGallery images={r.images} title={r.title} />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{r.title}</h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{r.title}</h1>
+              {!isOwner && (
+                <SaveButton roomId={r._id} saved={isSaved} variant="full" className="shrink-0" />
+              )}
+            </div>
             <p className="mt-2 flex items-center gap-1.5 text-ink-muted">
               <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M6 11s4-3.5 4-7a4 4 0 1 0-8 0c0 3.5 4 7 4 7z" />

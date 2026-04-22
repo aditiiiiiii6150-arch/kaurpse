@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./AuthProvider";
 import { useToast } from "./Toast";
 
@@ -12,9 +12,30 @@ export default function HeaderNav() {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
 
   // Close mobile menu on route change
   useEffect(() => { setOpen(false); }, [pathname]);
+
+  const loadSavedCount = useCallback(async () => {
+    if (!user || user.role !== "seeker") {
+      setSavedCount(0);
+      return;
+    }
+    try {
+      const r = await fetch("/api/saved", { cache: "no-store" });
+      const d = await r.json();
+      setSavedCount(d.count || 0);
+    } catch {}
+  }, [user]);
+
+  useEffect(() => { loadSavedCount(); }, [loadSavedCount, pathname]);
+
+  useEffect(() => {
+    function handler() { loadSavedCount(); }
+    window.addEventListener("basera:saved-changed", handler);
+    return () => window.removeEventListener("basera:saved-changed", handler);
+  }, [loadSavedCount]);
 
   async function handleLogout() {
     setBusy(true);
@@ -60,6 +81,30 @@ export default function HeaderNav() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex" id="desktop-nav">
           <NavLink href="/rooms">Browse</NavLink>
+          {user?.role === "seeker" && (
+            <Link
+              href="/saved"
+              id="nav-saved-link"
+              className={`inline-flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-sm font-medium transition-colors ${
+                pathname?.startsWith("/saved")
+                  ? "bg-canvas-soft text-ink"
+                  : "text-ink-muted hover:text-ink hover:bg-canvas-soft"
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={savedCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              Saved
+              {savedCount > 0 && (
+                <span
+                  id="saved-count-badge"
+                  className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-ink"
+                >
+                  {savedCount}
+                </span>
+              )}
+            </Link>
+          )}
           {user?.role === "owner" && <NavLink href="/dashboard">Dashboard</NavLink>}
           {ready && !user && (
             <>
@@ -114,6 +159,19 @@ export default function HeaderNav() {
         <div className="md:hidden border-t border-line bg-canvas-card animate-slide-up" id="mobile-nav">
           <div className="container-page flex flex-col gap-1 py-3">
             <Link href="/rooms" className="rounded-[10px] px-3 py-2.5 text-sm font-medium hover:bg-canvas-soft">Browse rooms</Link>
+            {user?.role === "seeker" && (
+              <Link
+                href="/saved"
+                className="flex items-center justify-between rounded-[10px] px-3 py-2.5 text-sm font-medium hover:bg-canvas-soft"
+              >
+                <span>Saved rooms</span>
+                {savedCount > 0 && (
+                  <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-ink">
+                    {savedCount}
+                  </span>
+                )}
+              </Link>
+            )}
             {user?.role === "owner" && (
               <Link href="/dashboard" className="rounded-[10px] px-3 py-2.5 text-sm font-medium hover:bg-canvas-soft">Dashboard</Link>
             )}

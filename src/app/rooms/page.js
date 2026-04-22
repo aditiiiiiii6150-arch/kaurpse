@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { dbConnect } from "@/lib/db";
 import Room, { LOCALITIES, ROOM_TYPES, GENDERS } from "@/models/Room";
-import RoomCard from "@/components/RoomCard";
+import User from "@/models/User";
 import RoomFilters from "@/components/RoomFilters";
+import RoomList from "@/components/RoomList";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 12;
 
 export default async function RoomsPage({ searchParams }) {
   const sp = searchParams || {};
@@ -23,10 +27,29 @@ export default async function RoomsPage({ searchParams }) {
   ];
 
   let rooms = [];
+  let nextCursor = null;
+  let savedIds = [];
   try {
     await dbConnect();
-    rooms = await Room.find(q).sort({ createdAt: -1 }).limit(60).lean();
+    const docs = await Room.find(q).sort({ _id: -1 }).limit(PAGE_SIZE + 1).lean();
+    const hasMore = docs.length > PAGE_SIZE;
+    rooms = (hasMore ? docs.slice(0, PAGE_SIZE) : docs).map((r) =>
+      JSON.parse(JSON.stringify(r))
+    );
+    nextCursor = hasMore ? String(rooms[rooms.length - 1]._id) : null;
+
+    const user = getCurrentUser();
+    if (user) {
+      const u = await User.findById(user.id).select("savedRooms").lean();
+      savedIds = (u?.savedRooms || []).map((id) => String(id));
+    }
   } catch {}
+
+  // Build query object for client load-more
+  const queryForClient = {};
+  ["q", "locality", "roomType", "gender", "minPrice", "maxPrice"].forEach((k) => {
+    if (sp[k]) queryForClient[k] = sp[k];
+  });
 
   const activeFilters = [
     sp.q && { k: "q", label: `"${sp.q}"` },
@@ -57,7 +80,8 @@ export default async function RoomsPage({ searchParams }) {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Rooms in Srinagar</h1>
             <p className="mt-1 text-sm text-ink-muted">
-              Showing <span className="font-semibold text-ink">{rooms.length}</span> result{rooms.length === 1 ? "" : "s"}
+              Showing <span className="font-semibold text-ink">{rooms.length}</span>
+              {nextCursor ? "+" : ""} result{rooms.length === 1 ? "" : "s"}
               {activeFilters.length > 0 && <> · {activeFilters.length} filter{activeFilters.length === 1 ? "" : "s"} applied</>}
             </p>
           </div>
@@ -93,11 +117,12 @@ export default async function RoomsPage({ searchParams }) {
             <Link href="/rooms" className="btn-primary mt-6">Clear all filters</Link>
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {rooms.map((r) => (
-              <RoomCard key={r._id.toString()} room={JSON.parse(JSON.stringify(r))} />
-            ))}
-          </div>
+          <RoomList
+            initialRooms={rooms}
+            initialCursor={nextCursor}
+            query={queryForClient}
+            savedIds={savedIds}
+          />
         )}
       </section>
     </div>
